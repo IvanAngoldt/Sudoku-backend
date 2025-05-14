@@ -16,25 +16,32 @@ const (
 )
 
 type Tournament struct {
-	ID          string           `json:"id"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	StartTime   time.Time        `json:"start_time"`
-	EndTime     time.Time        `json:"end_time"`
-	Status      TournamentStatus `json:"status"`
-	CreatedBy   string           `json:"created_by"`
-	CreatedAt   time.Time        `json:"created_at"`
+	ID          string           `json:"id" db:"id"`
+	Name        string           `json:"name" db:"name"`
+	Description string           `json:"description" db:"description"`
+	StartTime   time.Time        `json:"start_time" db:"start_time"`
+	EndTime     time.Time        `json:"end_time" db:"end_time"`
+	Status      TournamentStatus `json:"status" db:"status"`
+	CreatedBy   string           `json:"created_by" db:"created_by"`
+	CreatedAt   time.Time        `json:"created_at" db:"created_at"`
+}
+
+type CreateTournamentRequest struct {
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description"`
+	StartTime   time.Time `json:"start_time" binding:"required"`
+	EndTime     time.Time `json:"end_time" binding:"required"`
 }
 
 func NewTournament(name, description string, startTime, endTime time.Time,
-	status TournamentStatus, createdBy string) *Tournament {
+	createdBy string) *Tournament {
 	return &Tournament{
 		ID:          uuid.New().String(),
 		Name:        name,
 		Description: description,
 		StartTime:   startTime,
 		EndTime:     endTime,
-		Status:      status,
+		Status:      TournamentStatusPending,
 		CreatedBy:   createdBy,
 		CreatedAt:   time.Now(),
 	}
@@ -46,33 +53,23 @@ type UpdateTournamentInput struct {
 	StartTime   *time.Time        `json:"start_time"`
 	EndTime     *time.Time        `json:"end_time"`
 	Status      *TournamentStatus `json:"status"`
-}
-
-type TournamentParticipant struct {
-	ID                 string    `json:"id" db:"id"`
-	TournamentID       string    `json:"tournament_id" db:"tournament_id"`
-	UserID             string    `json:"user_id" db:"user_id"`
-	Score              int       `json:"score" db:"score"`
-	SolvedCount        int       `json:"solved_count" db:"solved_count"`
-	JoinedAt           time.Time `json:"joined_at" db:"joined_at"`
-	LastSolvedAt       time.Time `json:"last_solved_at" db:"last_solved_at"`
-	LastSolvedSudokuID string    `json:"last_solved_sudoku_id" db:"last_solved_sudoku_id"`
+	CreatedBy   *string           `json:"created_by"`
 }
 
 type TournamentResult struct {
-	ID           string    `json:"id" db:"id"`
-	TournamentID string    `json:"tournament_id" db:"tournament_id"`
-	UserID       string    `json:"user_id" db:"user_id"`
-	Score        int       `json:"score" db:"score"`
-	Rank         int       `json:"rank" db:"rank"`
-	SolvedCount  int       `json:"solved_count" db:"solved_count"`
-	FinishedAt   time.Time `json:"finished_at" db:"finished_at"`
+	TournamentID string `db:"tournament_id" json:"tournament_id"`
+	UserID       string `db:"user_id" json:"user_id"`
+	Username     string `db:"username" json:"username"`
+	Score        int    `db:"score" json:"score"`
+	Rank         int    `db:"rank" json:"rank"`
+	SolvedCount  int    `db:"solved_count" json:"solved_count"`
 }
 
-type TournamentDashboard struct {
-	ID           string                  `json:"id"`
-	Name         string                  `json:"name"`
-	Description  string                  `json:"description"`
-	Status       string                  `json:"status"`
-	Participants []TournamentParticipant `json:"participants"`
+type DashboardParticipant struct {
+	UserID      string    `db:"user_id" json:"user_id"`
+	Username    string    `db:"username" json:"username"`
+	Score       int       `db:"score" json:"score"`
+	SolvedCount int       `db:"solved_count" json:"solved_count"`
+	JoinedAt    time.Time `db:"joined_at" json:"joined_at"`
+	Rank        int       `json:"rank"`
 }

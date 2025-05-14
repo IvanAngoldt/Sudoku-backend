@@ -5,57 +5,60 @@ import (
 	"game/database"
 	"game/handlers"
 	"game/middleware"
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	logger := logrus.New()
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+		logrus.Fatalf("error loading config: %v", err)
 	}
 
-	os.MkdirAll("uploads/achievements", os.ModePerm)
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	_ = os.MkdirAll("uploads/achievements", os.ModePerm)
 
-	// Инициализация базы данных
 	db, err := database.NewDatabase(cfg)
 	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
+		logrus.Fatalf("failed to init database: %v", err)
 	}
-	defer db.Close()
 
 	// Инициализация обработчиков
-	gameHandler := handlers.NewGameHandler(db, cfg)
+	gameHandler := handlers.NewGameHandler(db, logger)
 
 	// Настройка роутера
 	router := gin.Default()
 
-	router.Use(middleware.ExtractUserIDHeader())
-	router.Use(gin.Logger())
-	router.Use(gin.RecoveryWithWriter(os.Stderr))
+	router.Use(middleware.ExtractUserIDHeader(cfg))
 
-	// Маршруты API
-	router.GET("/get-random-sudoku/:difficulty", gameHandler.GetRandomSudokuFromDB)
-	router.GET("/get-sudokus-by-difficulty/:difficulty", gameHandler.GetSudokusByDifficulty)
-
-	router.POST("/sudoku/solved", gameHandler.ReportSolved)
+	// Sudoku
+	router.GET("/sudoku", gameHandler.GetSudokuByDifficulty)
+	router.GET("/sudoku/all", gameHandler.GetAllSudokuByDifficulty)
 	router.GET("/sudoku/:id", gameHandler.GetSudokuByID)
+	router.POST("/sudoku/:id/solved", gameHandler.ReportSolved)
 
-	router.GET("/achievements", gameHandler.GetAchievements)
+	// Achievements
+	router.GET("/achievements", gameHandler.GetAllAchievements)
+	router.GET("/achievements/:code", gameHandler.GetAchievementByCode)
 	router.POST("/achievements", gameHandler.CreateAchievement)
+	router.PATCH("/achievements/:code", gameHandler.UpdateAchievement)
 	router.DELETE("/achievements/:code", gameHandler.DeleteAchievement)
 	router.GET("/achievements/:code/icon", gameHandler.GetAchievementIcon)
-	router.GET("/my-achievements", gameHandler.GetMyAchievements)
-	router.POST("/assign-achievement", gameHandler.AssignAchievement)
-	router.POST("/check-achievements", gameHandler.CheckAchievements)
 
-	router.DELETE("/achievements", gameHandler.DeleteUserAchievement)
+	// User Achievements
+	router.GET("/:id/achievements", gameHandler.GetUserAchievements)
+	router.POST("/:id/achievements", gameHandler.AssignAchievement)
+	router.DELETE("/:id/achievements/:code", gameHandler.DeleteUserAchievement)
 
-	// Запуск сервера
-	log.Printf("Server starting on port %s", cfg.ServerPort)
+	// Auto Achievements
+	// router.POST("/:id/achievements/check", gameHandler.CheckAndAssignAchievements)
 
-	router.Run(":" + cfg.ServerPort)
+	// Запуск
+	logger.Infof("Server starting on port %s", cfg.ServerPort)
+	if err := router.Run(":" + cfg.ServerPort); err != nil {
+		logger.Fatalf("server error: %v", err)
+	}
 }

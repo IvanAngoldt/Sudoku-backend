@@ -1,6 +1,8 @@
 package middleware
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func ExtractUserIDHeader() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -10,3 +12,12 @@ func ExtractUserIDHeader() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// func ExtractUserRoleHeader() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		if userRole := c.GetHeader("X-User-Role"); userRole != "" {
+// 			c.Set("user_role", userRole)
+// 		}
+// 		c.Next()
+// 	}
+// }

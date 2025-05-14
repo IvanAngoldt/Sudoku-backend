@@ -19,6 +19,7 @@ type Config struct {
 
 	Port           string
 	GameServiceURL string
+	UserServiceURL string
 }
 
 func LoadConfig() (*Config, error) {
@@ -40,5 +41,6 @@ func LoadConfig() (*Config, error) {
 
 		Port:           os.Getenv("PORT"),
 		GameServiceURL: os.Getenv("GAME_SERVICE_URL"),
+		UserServiceURL: os.Getenv("USER_SERVICE_URL"),
 	}, nil
 }

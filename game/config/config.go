@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -12,31 +13,32 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+
 	ServerPort string
 	UsersURL   string
 }
 
 func LoadConfig() (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
+	_ = godotenv.Load(".env")
+
+	cfg := &Config{
+		DBHost:     getEnv("DB_HOST"),
+		DBPort:     getEnv("DB_PORT"),
+		DBUser:     getEnv("DB_USER"),
+		DBPassword: getEnv("DB_PASSWORD"),
+		DBName:     getEnv("DB_NAME"),
+
+		ServerPort: getEnv("SERVER_PORT"),
+		UsersURL:   getEnv("USERS_SERVICE_URL"),
 	}
 
-	return &Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPassword: getEnv("DB_PASSWORD", "root"),
-		DBName:     getEnv("DB_NAME", "sudoku"),
-		ServerPort: getEnv("GAME_PORT", "8083"),
-		UsersURL:   getEnv("USERS_SERVICE_URL", "http://localhost:8082"),
-	}, nil
+	return cfg, nil
 }
 
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
+func getEnv(key string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		panic(fmt.Sprintf("missing required environment variable: %s", key))
 	}
-	return value
+	return val
 }

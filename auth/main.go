@@ -4,31 +4,33 @@ import (
 	"auth/config"
 	"auth/handlers"
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	// Загрузка конфигурации
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+		log.Fatalf("failed to load config: %v", err)
 	}
 
-	log.Println("AUTH JWT_SECRET:", os.Getenv("JWT_SECRET"))
+	logger := logrus.New()
 
-	// Инициализация обработчиков
-	authHandler := handlers.NewAuthHandler(cfg)
+	// Инициализация обработчика
+	authHandler := handlers.NewAuthHandler(cfg, logger)
 
-	// Настройка роутера
+	// Инициализация роутера
 	router := gin.Default()
 
-	// Маршруты API
+	// Маршруты
 	router.POST("/register", authHandler.Register)
 	router.POST("/login", authHandler.Login)
 
-	// Запуск сервера
-	log.Printf("Auth server starting on port %s", cfg.ServerPort)
-	router.Run(":" + cfg.ServerPort)
+	// Запуск
+	logger.Infof("Server starting on port %s", cfg.ServerPort)
+	if err := router.Run(":" + cfg.ServerPort); err != nil {
+		logger.Fatalf("server error: %v", err)
+	}
 }

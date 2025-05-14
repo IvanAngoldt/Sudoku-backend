@@ -6,63 +6,55 @@ import (
 	"tournament/database"
 	"tournament/handlers"
 	"tournament/middleware"
-	"tournament/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	logger := logrus.New()
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Error loading config:", err)
+		logrus.Fatalf("error loading config: %v", err)
 	}
 
-	// Инициализация базы данных
 	db, err := database.NewDatabase(cfg)
 	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
+		logrus.Fatalf("failed to init database: %v", err)
 	}
-	defer db.Close()
-
-	// Инициализация Redis
-	redisClient := database.NewRedisClient(cfg)
-	if err != nil {
-		log.Fatalf("Error connecting to Redis: %v", err)
-	}
-	defer redisClient.Close()
-
-	// Инициализация сервисов
-	tournamentService := services.NewTournamentService(db)
-
-	// Инициализация сервисов
-	gameService := services.NewGameService(cfg)
 
 	// Инициализация обработчиков
-	tournamentHandler := handlers.NewTournamentHandler(db, redisClient, cfg, tournamentService, gameService)
+	tournamentHandler := handlers.NewTournamentHandler(db, logger)
 
 	// Настройка роутера
 	router := gin.Default()
 
-	router.Use(middleware.ExtractUserIDHeader())
+	router.Use(middleware.ExtractUserIDHeader(cfg))
 
 	// Базовые CRUD операции
-	router.POST("/", tournamentHandler.CreateTournament)
 	router.GET("/", tournamentHandler.GetTournaments)
 	router.GET("/:id", tournamentHandler.GetTournament)
-	router.PUT("/:id", tournamentHandler.UpdateTournament)
+	router.POST("/", tournamentHandler.CreateTournament)
+	router.PATCH("/:id", tournamentHandler.PatchTournament)
 	router.DELETE("/:id", tournamentHandler.DeleteTournament)
 
+	router.GET("/current", tournamentHandler.GetCurrentTournament)
+
 	// Операции с участниками турнира
+	router.GET("/:id/participants", tournamentHandler.GetParticipants)
 	router.POST("/:id/register", tournamentHandler.RegisterParticipant)
 	router.DELETE("/:id/delete", tournamentHandler.DeleteParticipant)
+
+	router.GET("/:id/dashboard", tournamentHandler.GetDashboard)
+	router.GET("/:id/results", tournamentHandler.GetResults)
 
 	router.POST("/:id/start", tournamentHandler.StartTournament)
 	router.POST("/:id/finish", tournamentHandler.FinishTournament)
 
-	router.GET("/sudoku/:difficulty", tournamentHandler.GetUnsolvedSudoku)
-	router.POST("/sudoku/solved", tournamentHandler.UpdateProgress)
-
-	router.GET("/dashboard", tournamentHandler.GetDashboard)
+	router.POST("/sudoku", tournamentHandler.GetSudoku)
+	router.POST("/sudoku/:id", tournamentHandler.GetSudokuByID)
+	router.POST("/sudoku/:id/solved", tournamentHandler.ReportSolved)
 
 	// Запуск сервера
 	if err := router.Run(":" + cfg.Port); err != nil {

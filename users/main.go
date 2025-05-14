@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"users/config"
 	"users/database"
@@ -9,58 +8,60 @@ import (
 	"users/middleware"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	logger := logrus.New()
+
 	// Загрузка конфигурации
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+		logrus.Fatalf("error loading config: %v", err)
 	}
 
-	os.MkdirAll("uploads/avatars", os.ModePerm)
-	os.MkdirAll("uploads/achievements", os.ModePerm)
+	// Создание папки под аватары
+	_ = os.MkdirAll("uploads/avatars", os.ModePerm)
 
-	// Инициализация базы данных
 	db, err := database.NewDatabase(cfg)
 	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
+		logrus.Fatalf("failed to init database: %v", err)
 	}
-	defer db.Close()
 
-	// Инициализация обработчиков
-	userHandler := handlers.NewUserHandler(db)
+	// Обработчики
+	userHandler := handlers.NewUserHandler(db, logger)
 
-	// Настройка роутера
+	// Роутер
 	router := gin.Default()
 
 	router.Use(middleware.ExtractUserIDHeader())
 
-	// Маршруты API
-	router.GET("/", userHandler.GetUsers)
-	router.GET("/me", userHandler.GetMe)
-	router.GET(":id", userHandler.GetUser)
-	router.POST("/", userHandler.CreateUser)
-	router.PATCH("/:id", userHandler.PatchUser)
-	router.PUT("/:id", userHandler.UpdateUser)
-	router.DELETE("/:id", userHandler.DeleteUser)
+	// Публичные маршруты
 	router.GET("/check-username", userHandler.CheckUsername)
 	router.GET("/check-email", userHandler.CheckEmail)
+	router.POST("/", userHandler.CreateUser)
 	router.POST("/auth", userHandler.AuthUser)
 
-	router.POST("/info", userHandler.CreateUserInfo)
-	router.GET("/info", userHandler.GetMyUserInfo)
-	router.PUT("/info", userHandler.UpdateUserInfo)
-	router.DELETE("/info", userHandler.DeleteUserInfo)
+	// Защищённые маршруты
+	router.GET("/", userHandler.GetUsers)
+	router.GET("/:id", userHandler.GetUser)
+	router.PATCH("/:id", userHandler.PatchUser)
+	router.DELETE("/:id", userHandler.DeleteUser)
 
-	router.POST("/avatar", userHandler.UploadAvatar)
-	router.GET("/avatar", userHandler.GetAvatar)
+	router.GET("/me", userHandler.GetMe)
+	router.GET("/me/info", userHandler.GetMyUserInfo)
+	router.PATCH("/me/info", userHandler.UpdateUserInfo)
 
-	router.GET("/statistics/:user_id", userHandler.GetUserStatistics)
-	router.POST("/statistics/update", userHandler.UpdateUserStats)
+	router.POST("/me/avatar", userHandler.UploadAvatar)
+	router.GET("/:id/avatar", userHandler.GetAvatar)
 
-	// Запуск сервера
-	log.Printf("Server starting on port %s", cfg.ServerPort)
+	router.GET("/:id/statistics", userHandler.GetUserStatistics)
+	router.PATCH("/:id/statistics", userHandler.UpdateUserStats)
 
-	router.Run(":" + cfg.ServerPort)
+	// Запуск
+	logger.Infof("Server starting on port %s", cfg.ServerPort)
+	if err := router.Run(":" + cfg.ServerPort); err != nil {
+		logger.Fatalf("server error: %v", err)
+	}
 }

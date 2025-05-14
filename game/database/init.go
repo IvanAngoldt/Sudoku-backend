@@ -39,8 +39,8 @@ func (d *Database) createTables(ctx context.Context) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS sudoku_fields (
 			id VARCHAR(36) PRIMARY KEY,
-			initial_field VARCHAR(81) NOT NULL,
-			solution VARCHAR(81) NOT NULL,
+			initial_field TEXT NOT NULL,
+			solution TEXT NOT NULL,
 			complexity TEXT NOT NULL,
 			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

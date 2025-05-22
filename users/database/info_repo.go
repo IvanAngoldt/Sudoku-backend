@@ -10,8 +10,8 @@ import (
 
 func (d *Database) CreateUserInfo(ctx context.Context, userID string) error {
 	const query = `
-		INSERT INTO user_info (user_id, full_name, age, city)
-		VALUES ($1, '', 0, '')
+		INSERT INTO user_info (user_id, firstname, secondname, age, city)
+		VALUES ($1, '', '', 0, '')
 	`
 
 	_, err := d.DB.ExecContext(ctx, query, userID)
@@ -23,7 +23,7 @@ func (d *Database) CreateUserInfo(ctx context.Context, userID string) error {
 
 func (d *Database) GetUserInfo(ctx context.Context, userID string) (*models.UserInfo, error) {
 	const query = `
-		SELECT full_name, age, city
+		SELECT firstname, secondname, age, city
 		FROM user_info
 		WHERE user_id = $1
 	`
@@ -41,7 +41,7 @@ func (d *Database) GetUserInfo(ctx context.Context, userID string) (*models.User
 
 func (d *Database) GetUserInfoByUserID(ctx context.Context, userID string) (*models.UserInfo, error) {
 	const query = `
-		SELECT user_id, full_name, age, city
+		SELECT user_id, firstname, secondname, age, city
 		FROM user_info
 		WHERE user_id = $1
 	`
@@ -62,24 +62,27 @@ func (d *Database) UpdateUserInfo(ctx context.Context, userID string, input mode
 	const query = `
 		UPDATE user_info
 		SET
-			full_name = COALESCE(:full_name, full_name),
+			firstname = COALESCE(:firstname, firstname),
+			secondname = COALESCE(:secondname, secondname),
 			age = COALESCE(:age, age),
 			city = COALESCE(:city, city)
 		WHERE user_id = :user_id
 	`
 
 	type updatePayload struct {
-		UserID   string  `db:"user_id"`
-		FullName *string `db:"full_name"`
-		Age      *int    `db:"age"`
-		City     *string `db:"city"`
+		UserID     string  `db:"user_id"`
+		FirstName  *string `db:"firstname"`
+		SecondName *string `db:"secondname"`
+		Age        *int    `db:"age"`
+		City       *string `db:"city"`
 	}
 
 	payload := updatePayload{
-		UserID:   userID,
-		FullName: input.FullName,
-		Age:      input.Age,
-		City:     input.City,
+		UserID:     userID,
+		FirstName:  input.FirstName,
+		SecondName: input.SecondName,
+		Age:        input.Age,
+		City:       input.City,
 	}
 
 	_, err := d.DB.NamedExecContext(ctx, query, payload)

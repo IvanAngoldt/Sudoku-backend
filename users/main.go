@@ -51,6 +51,7 @@ func main() {
 
 	router.GET("/me", userHandler.GetMe)
 	router.GET("/me/info", userHandler.GetMyUserInfo)
+	router.POST("/me/info", userHandler.CreateMyUserInfo)
 	router.PATCH("/me/info", userHandler.UpdateUserInfo)
 
 	router.POST("/me/avatar", userHandler.UploadAvatar)

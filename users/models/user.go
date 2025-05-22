@@ -6,11 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// ------------------------------------------------------------
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required,min=5"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+}
 
 type AuthRequest struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type AuthResponse struct {
@@ -63,31 +67,27 @@ type UpdateUserInput struct {
 	Password *string `json:"password"`
 }
 
-type CreateUserRequest struct {
-	Username string `json:"username" binding:"required,min=5"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
 type UserInfo struct {
-	ID       int    `json:"id" db:"id"`
-	UserID   string `json:"user_id" db:"user_id"`
-	FullName string `json:"full_name" db:"full_name"`
-	Age      int    `json:"age" db:"age"`
-	City     string `json:"city" db:"city"`
+	ID         int    `json:"id" db:"id"`
+	UserID     string `json:"user_id" db:"user_id"`
+	FirstName  string `json:"firstname" db:"firstname"`
+	SecondName string `json:"secondname" db:"secondname"`
+	Age        int    `json:"age" db:"age"`
+	City       string `json:"city" db:"city"`
 }
 
 type UserInfoResponse struct {
-	UserID   string `json:"user_id"`
-	FullName string `json:"full_name"`
-	Age      int    `json:"age"`
-	City     string `json:"city"`
+	FirstName  string `json:"firstname"`
+	SecondName string `json:"secondname"`
+	Age        int    `json:"age"`
+	City       string `json:"city"`
 }
 
 type UpdateUserInfoInput struct {
-	FullName *string `json:"full_name"`
-	Age      *int    `json:"age"`
-	City     *string `json:"city"`
+	FirstName  *string `json:"firstname"`
+	SecondName *string `json:"secondname"`
+	Age        *int    `json:"age"`
+	City       *string `json:"city"`
 }
 
 type DifficultyStatEntry struct {

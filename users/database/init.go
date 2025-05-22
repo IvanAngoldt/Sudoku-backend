@@ -48,7 +48,8 @@ func (d *Database) createTables(ctx context.Context) error {
 		)`,
 		`CREATE TABLE IF NOT EXISTS user_info (
 			user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			full_name VARCHAR(100) NOT NULL DEFAULT '',
+			firstname VARCHAR(20) NOT NULL DEFAULT '',
+			secondname VARCHAR(20) NOT NULL DEFAULT '',
 			age INT NOT NULL DEFAULT 0,
 			city VARCHAR(50) NOT NULL DEFAULT '',
 			PRIMARY KEY (user_id)

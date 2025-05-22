@@ -65,6 +65,7 @@ func RegisterUsersProxy(r *gin.Engine, usersServiceURL *url.URL, logger *logrus.
 
 	protected.GET("/me", ProxyWithUserHeaders(proxy))
 	protected.GET("/me/info", ProxyWithUserHeaders(proxy))
+	protected.POST("/me/info", ProxyWithUserHeaders(proxy))
 	protected.PATCH("/me/info", ProxyWithUserHeaders(proxy))
 
 	protected.POST("/me/avatar", ProxyWithUserHeaders(proxy))

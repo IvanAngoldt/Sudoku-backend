@@ -16,7 +16,7 @@ func (d *Database) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	`
 
 	var user models.User
-	err := d.DB.GetContext(ctx, &user, query)
+	err := d.DB.GetContext(ctx, &user, query, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

@@ -1,1 +1,5 @@
-echo "frontend/" >> .gitignore
+gateway/.env
+auth/.env
+users/.env
+game/.env
+tournament/.env

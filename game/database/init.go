@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"game/config"
+	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -22,8 +24,19 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
 
+	// ⏳ Ждём, пока БД станет доступна
+	const maxRetries = 10
+	for i := 0; i < maxRetries; i++ {
+		err := db.Ping()
+		if err == nil {
+			break
+		}
+		log.Printf("waiting for database... (%d/%d): %v", i+1, maxRetries, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping db: %w", err)
+		return nil, fmt.Errorf("failed to ping db after retries: %w", err)
 	}
 
 	database := &Database{DB: db}
